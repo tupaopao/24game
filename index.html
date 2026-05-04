@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>24点游戏</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 16px;
+    color: #fff;
+  }
+  .container {
+    width: 100%;
+    max-width: 420px;
+    background: rgba(255,255,255,0.06);
+    backdrop-filter: blur(20px);
+    border-radius: 28px;
+    padding: 28px 20px 32px;
+    border: 1px solid rgba(255,255,255,0.12);
+    box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+  .header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    background: linear-gradient(90deg, #f7971e, #ffd200);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .score-box {
+    background: rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 6px 14px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .score-box span { color: #ffd700; font-weight: 700; }
+
+  .cards {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 20px 0 28px;
+  }
+  .card {
+    width: 72px;
+    height: 100px;
+    background: #fff;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 28px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    transition: transform 0.2s;
+    position: relative;
+  }
+  .card .suit {
+    font-size: 18px;
+    margin-top: 2px;
+  }
+  .card.red { color: #e74c3c; }
+  .card.black { color: #222; }
+
+  .card.deal {
+    animation: dealCard 0.4s ease-out both;
+  }
+  .card:nth-child(1).deal { animation-delay: 0.05s; }
+  .card:nth-child(2).deal { animation-delay: 0.15s; }
+  .card:nth-child(3).deal { animation-delay: 0.25s; }
+  .card:nth-child(4).deal { animation-delay: 0.35s; }
+
+  @keyframes dealCard {
+    0% { transform: translateY(-60px) scale(0.5) rotate(-10deg); opacity: 0; }
+    100% { transform: translateY(0) scale(1) rotate(0); opacity: 1; }
+  }
+
+  .card .card-corner-top {
+    position: absolute;
+    top: 6px;
+    left: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .card .card-corner-bottom {
+    position: absolute;
+    bottom: 6px;
+    right: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+    transform: rotate(180deg);
+  }
+
+  .input-area {
+    margin-bottom: 16px;
+  }
+  .input-area label {
+    display: block;
+    font-size: 13px;
+    color: rgba(255,255,255,0.6);
+    margin-bottom: 8px;
+  }
+  .input-row {
+    display: flex;
+    gap: 10px;
+  }
+  .input-row input {
+    flex: 1;
+    background: rgba(255,255,255,0.1);
+    border: 2px solid rgba(255,255,255,0.15);
+    border-radius: 14px;
+    padding: 12px 16px;
+    font-size: 18px;
+    color: #fff;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .input-row input:focus {
+    border-color: #ffd700;
+  }
+  .input-row input::placeholder {
+    color: rgba(255,255,255,0.3);
+  }
+  .input-row button {
+    background: linear-gradient(135deg, #f7971e, #ffd200);
+    border: none;
+    border-radius: 14px;
+    padding: 0 20px;
+    color: #1a1a2e;
+    font-weight: 700;
+    font-size: 16px;
+    cursor: pointer;
+    transition: transform 0.15s, opacity 0.15s;
+    white-space: nowrap;
+  }
+  .input-row button:active {
+    transform: scale(0.95);
+  }
+  .input-row button:disabled {
+    opacity: 0.4;
+    transform: none;
+  }
+
+  .actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 14px;
+  }
+  .actions button {
+    flex: 1;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 12px;
+    padding: 10px;
+    color: rgba(255,255,255,0.8);
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .actions button:active {
+    background: rgba(255,255,255,0.15);
+  }
+  .actions button.primary {
+    background: rgba(255,215,0,0.15);
+    border-color: rgba(255,215,0,0.3);
+    color: #ffd700;
+  }
+
+  .result {
+    margin-top: 16px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 15px;
+    text-align: center;
+    min-height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+  }
+  .result.success {
+    background: rgba(46,204,113,0.15);
+    color: #2ecc71;
+    border: 1px solid rgba(46,204,113,0.3);
+  }
+  .result.error {
+    background: rgba(231,76,60,0.15);
+    color: #e74c3c;
+    border: 1px solid rgba(231,76,60,0.3);
+  }
+  .result.hint {
+    background: rgba(52,152,219,0.15);
+    color: #3498db;
+    border: 1px solid rgba(52,152,219,0.3);
+    font-size: 13px;
+    word-break: break-all;
+  }
+  .result.empty {
+    background: transparent;
+    color: transparent;
+    border: 1px solid transparent;
+  }
+
+  .history-toggle {
+    margin-top: 20px;
+    text-align: center;
+  }
+  .history-toggle button {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.35);
+    font-size: 13px;
+    cursor: pointer;
+    padding: 4px 12px;
+  }
+  .history-list {
+    margin-top: 10px;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
+  .history-list.open {
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  .history-list::-webkit-scrollbar { width: 4px; }
+  .history-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+  .history-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 12px;
+    font-size: 13px;
+    color: rgba(255,255,255,0.5);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .history-item .cards-nums { font-weight: 600; color: rgba(255,255,255,0.7); }
+  .history-item .status {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 6px;
+  }
+  .history-item .status.ok { background: rgba(46,204,113,0.2); color: #2ecc71; }
+  .history-item .status.fail { background: rgba(231,76,60,0.2); color: #e74c3c; }
+  .history-item .status.skip { background: rgba(255,215,0,0.2); color: #ffd700; }
+
+  .badge {
+    display: inline-block;
+    background: rgba(255,215,0,0.15);
+    border: 1px solid rgba(255,215,0,0.3);
+    border-radius: 8px;
+    padding: 2px 10px;
+    font-size: 12px;
+    color: #ffd700;
+    margin-left: 8px;
+  }
+
+  @media (max-width: 380px) {
+    .card { width: 62px; height: 88px; font-size: 24px; }
+    .container { padding: 20px 14px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container" id="app">
+  <div class="header">
+    <h1>🃏 24点</h1>
+    <div class="score-box">
+      🏆 得分 <span id="score">0</span>
+    </div>
+  </div>
+
+  <div class="cards" id="cards"></div>
+
+  <div class="input-area">
+    <label>输入算式（用 + - × ÷ 或 * /）：</label>
+    <div class="input-row">
+      <input type="text" id="exprInput" placeholder="例: (8-3)×5-1" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      <button id="submitBtn">✅ 验证</button>
+    </div>
+  </div>
+
+  <div class="result empty" id="result">&nbsp;</div>
+
+  <div class="actions">
+    <button id="hintBtn">💡 提示</button>
+    <button id="newBtn" class="primary">🎲 下一题</button>
+    <button id="skipBtn">⏭️ 跳过</button>
+  </div>
+
+  <div class="history-toggle">
+    <button id="historyToggle">📜 历史记录</button>
+  </div>
+  <div class="history-list" id="historyList"></div>
+</div>
+
+<script>
+(function(){
+  const CARD_VALUES = [1,2,3,4,5,6,7,8,9,10,11,12,13];
+  const SUITS = ['♠','♥','♣','♦'];
+  const DISPLAY = {1:'A',11:'J',12:'Q',13:'K'};
+  const LABEL = n => DISPLAY[n] || n;
+
+  let score = parseInt(localStorage.getItem('g24_score')) || 0;
+  let history = JSON.parse(localStorage.getItem('g24_history') || '[]');
+  let currentNums = [];
+  let currentSuits = [];
+  let currentSolution = null;
+  let solved = false;
+
+  const cardsEl = document.getElementById('cards');
+  const exprInput = document.getElementById('exprInput');
+  const submitBtn = document.getElementById('submitBtn');
+  const resultEl = document.getElementById('result');
+  const scoreEl = document.getElementById('score');
+  const hintBtn = document.getElementById('hintBtn');
+  const newBtn = document.getElementById('newBtn');
+  const skipBtn = document.getElementById('skipBtn');
+  const historyToggle = document.getElementById('historyToggle');
+  const historyList = document.getElementById('historyList');
+
+  scoreEl.textContent = score;
+
+  function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  function randInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  function pickCards() {
+    const nums = [];
+    const suits = [];
+    for (let i = 0; i < 4; i++) {
+      nums.push(CARD_VALUES[randInt(0, 12)]);
+      suits.push(SUITS[randInt(0, 3)]);
+    }
+    return { nums, suits };
+  }
+
+  // Check if any permutation of the 4 numbers can make 24
+  function solve24(nums) {
+    const ops = ['+','-','*','/'];
+    const results = new Set();
+
+    // Generate all permutations of indices
+    function permute(arr, prefix) {
+      if (prefix.length === 4) {
+        const vals = prefix.map(i => arr[i]);
+        evaluateAll(vals, results);
+        return;
+      }
+      for (let i = 0; i < arr.length; i++) {
+        if (!prefix.includes(i)) {
+          permute(arr, [...prefix, i]);
+        }
+      }
+    }
+    permute(nums, []);
+
+    if (results.size > 0) {
+      // Return the first result
+      return results.values().next().value;
+    }
+    return null;
+  }
+
+  function evaluateAll(vals, results) {
+    const ops = ['+','-','*','/'];
+    // Try all 5 binary tree structures for 4 numbers
+    // Structure 1: ((a○b)○c)○d
+    for (let o1 of ops) {
+      for (let o2 of ops) {
+        for (let o3 of ops) {
+          // ((a○b)○c)○d
+          let r = calc(calc(calc(vals[0], o1, vals[1]), o2, vals[2]), o3, vals[3]);
+          if (r !== null && Math.abs(r - 24) < 0.0001) {
+            results.add(`((${displayVal(vals[0])}${o1}${displayVal(vals[1])})${o2}${displayVal(vals[2])})${o3}${displayVal(vals[3])}`);
+          }
+          // (a○(b○c))○d
+          r = calc(calc(vals[0], o1, calc(vals[1], o2, vals[2])), o3, vals[3]);
+          if (r !== null && Math.abs(r - 24) < 0.0001) {
+            results.add(`(${displayVal(vals[0])}${o1}(${displayVal(vals[1])}${o2}${displayVal(vals[2])}))${o3}${displayVal(vals[3])}`);
+          }
+          // (a○b)○(c○d)
+          r = calc(calc(vals[0], o1, vals[1]), o2, calc(vals[2], o3, vals[3]));
+          if (r !== null && Math.abs(r - 24) < 0.0001) {
+            results.add(`(${displayVal(vals[0])}${o1}${displayVal(vals[1])})${o2}(${displayVal(vals[2])}${o3}${displayVal(vals[3])})`);
+          }
+          // a○((b○c)○d)
+          r = calc(vals[0], o1, calc(calc(vals[1], o2, vals[2]), o3, vals[3]));
+          if (r !== null && Math.abs(r - 24) < 0.0001) {
+            results.add(`${displayVal(vals[0])}${o1}((${displayVal(vals[1])}${o2}${displayVal(vals[2])})${o3}${displayVal(vals[3])})`);
+          }
+          // a○(b○(c○d))
+          r = calc(vals[0], o1, calc(vals[1], o2, calc(vals[2], o3, vals[3])));
+          if (r !== null && Math.abs(r - 24) < 0.0001) {
+            results.add(`${displayVal(vals[0])}${o1}(${displayVal(vals[1])}${o2}(${displayVal(vals[2])}${o3}${displayVal(vals[3])}))`);
+          }
+        }
+      }
+    }
+  }
+
+  function displayVal(v) {
+    return v;
+  }
+
+  function calc(a, op, b) {
+    switch(op) {
+      case '+': return a + b;
+      case '-': return a - b;
+      case '*': return a * b;
+      case '/': return b === 0 ? null : a / b;
+    }
+    return null;
+  }
+
+  function formatSolution(expr) {
+    // Replace * with × and / with ÷
+    return expr.replace(/\*/g, '×').replace(/\//g, '÷');
+  }
+
+  function parseAndEvalUserExpr(expr, nums) {
+    // Replace × and ÷ with * and /
+    let clean = expr.replace(/×/g, '*').replace(/÷/g, '/').replace(/\s/g, '');
+    if (!clean) return null;
+
+    // Check only allowed characters
+    if (!/^[\d+\-*/().]+$/.test(clean)) return null;
+
+    // Extract numbers from expression
+    const exprNums = clean.match(/\d+/g).map(Number);
+
+    // Check that all 4 numbers are used exactly once
+    const sortedExpr = [...exprNums].sort((a,b) => a-b);
+    const sortedNums = [...nums].sort((a,b) => a-b);
+    if (sortedExpr.length !== 4 || sortedExpr.some((v,i) => v !== sortedNums[i])) {
+      return 'nums_mismatch';
+    }
+
+    try {
+      const result = Function('"use strict"; return (' + clean + ')')();
+      return result;
+    } catch(e) {
+      return null;
+    }
+  }
+
+  function renderCards(nums, suits) {
+    cardsEl.innerHTML = '';
+    for (let i = 0; i < 4; i++) {
+      const val = nums[i];
+      const suit = suits[i];
+      const isRed = suit === '♥' || suit === '♦';
+      const card = document.createElement('div');
+      card.className = `card ${isRed ? 'red' : 'black'} deal`;
+      const displayVal = LABEL(val);
+      card.innerHTML = `
+        <div class="card-corner-top">${displayVal}<br>${suit}</div>
+        <div style="font-size:32px;line-height:1">${displayVal}</div>
+        <div class="suit">${suit}</div>
+        <div class="card-corner-bottom">${displayVal}<br>${suit}</div>
+      `;
+      cardsEl.appendChild(card);
+    }
+  }
+
+  function newRound() {
+    solved = false;
+    currentSolution = null;
+    resultEl.className = 'result empty';
+    resultEl.innerHTML = '&nbsp;';
+
+    const { nums, suits } = pickCards();
+    currentNums = nums;
+    currentSuits = suits;
+    renderCards(nums, suits);
+
+    // Pre-compute solution
+    currentSolution = solve24(nums);
+
+    exprInput.value = '';
+    exprInput.disabled = false;
+    submitBtn.disabled = false;
+    exprInput.focus();
+  }
+
+  function handleSubmit() {
+    if (solved) {
+      setResult('你已经答对了！点「下一题」继续 🎉', 'success');
+      return;
+    }
+
+    const expr = exprInput.value.trim();
+    if (!expr) {
+      setResult('请输入算式！', 'error');
+      return;
+    }
+
+    const result = parseAndEvalUserExpr(expr, currentNums);
+
+    if (result === null) {
+      setResult('算式有误，请检查格式 📝', 'error');
+      return;
+    }
+    if (result === 'nums_mismatch') {
+      const numsStr = currentNums.map(LABEL).join(', ');
+      setResult(`必须用这4个数：${numsStr}，每个用一次！`, 'error');
+      return;
+    }
+    if (typeof result === 'number') {
+      if (Math.abs(result - 24) < 0.0001) {
+        setResult('✅ 正确！太棒了！🎉', 'success');
+        solved = true;
+        score += 10;
+        scoreEl.textContent = score;
+        localStorage.setItem('g24_score', score);
+        addHistory(currentNums, true);
+      } else {
+        setResult(`❌ 结果是 ${result}，不是24，再试试！`, 'error');
+      }
+    }
+  }
+
+  function setResult(msg, type) {
+    resultEl.className = `result ${type}`;
+    resultEl.textContent = msg;
+  }
+
+  function showHint() {
+    if (solved) {
+      setResult('已经答对了！👏', 'success');
+      return;
+    }
+    if (currentSolution) {
+      setResult(`💡 参考：${formatSolution(currentSolution)}`, 'hint');
+    } else {
+      setResult('😅 这题无解，点「下一题」换一题吧！', 'hint');
+    }
+  }
+
+  function skipRound() {
+    if (!solved) {
+      addHistory(currentNums, false, true);
+    }
+    newRound();
+  }
+
+  function addHistory(nums, correct, skipped) {
+    const entry = {
+      nums: [...nums],
+      correct: !!correct,
+      skipped: !!skipped,
+      time: Date.now()
+    };
+    history.unshift(entry);
+    if (history.length > 50) history.pop();
+    localStorage.setItem('g24_history', JSON.stringify(history));
+    renderHistory();
+  }
+
+  function renderHistory() {
+    if (history.length === 0) {
+      historyList.innerHTML = '<div style="text-align:center;padding:12px;color:rgba(255,255,255,0.3);font-size:13px;">还没有记录</div>';
+      return;
+    }
+    historyList.innerHTML = history.slice(0, 20).map(h => {
+      const numsStr = h.nums.map(LABEL).join(' ');
+      let statusClass, statusText;
+      if (h.skipped) { statusClass = 'skip'; statusText = '跳过'; }
+      else if (h.correct) { statusClass = 'ok'; statusText = '✓ 答对'; }
+      else { statusClass = 'fail'; statusText = '✗ 未答'; }
+      return `<div class="history-item">
+        <span class="cards-nums">${numsStr}</span>
+        <span class="status ${statusClass}">${statusText}</span>
+      </div>`;
+    }).join('');
+  }
+
+  // Event listeners
+  submitBtn.addEventListener('click', handleSubmit);
+  exprInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') handleSubmit();
+  });
+  hintBtn.addEventListener('click', showHint);
+  newBtn.addEventListener('click', newRound);
+  skipBtn.addEventListener('click', skipRound);
+
+  historyToggle.addEventListener('click', () => {
+    historyList.classList.toggle('open');
+  });
+
+  // Quick paste buttons for mobile: insert operators
+  // Not needed with virtual keyboard
+
+  // Init
+  renderHistory();
+  newRound();
+
+  // Save score periodically
+  window.addEventListener('beforeunload', () => {
+    localStorage.setItem('g24_score', score);
+  });
+})();
+</script>
+</body>
+</html>
